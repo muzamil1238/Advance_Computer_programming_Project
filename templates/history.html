@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}History — Habit Tracker{% endblock %}
+
+{% block content %}
+<div class="flex items-start justify-between gap-4 mb-6">
+    <div>
+        <h1 class="text-3xl font-semibold">History</h1>
+        <p class="text-gray-400 mt-1">All past check-ins with notes.</p>
+    </div>
+    <div class="hidden sm:flex items-center gap-2">
+        <a href="{{ url_for('export_csv') }}" class="rounded-2xl bg-white/5 hover:bg-white/10 px-4 py-3 text-sm">Export CSV</a>
+        <a href="{{ url_for('export_pdf') }}" class="rounded-2xl bg-white/5 hover:bg-white/10 px-4 py-3 text-sm">Export PDF</a>
+    </div>
+</div>
+
+<div class="rounded-3xl border border-white/10 bg-gray-900 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="min-w-full text-sm">
+            <thead class="bg-white/5 text-gray-300">
+                <tr>
+                    <th class="text-left font-medium px-5 py-4">Date</th>
+                    <th class="text-left font-medium px-5 py-4">Habit</th>
+                    <th class="text-left font-medium px-5 py-4">Category</th>
+                    <th class="text-left font-medium px-5 py-4">Status</th>
+                    <th class="text-left font-medium px-5 py-4">Notes</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-white/10">
+                {% for entry in entries %}
+                <tr class="hover:bg-white/5">
+                    <td class="px-5 py-4 text-gray-200 whitespace-nowrap">{{ entry.date }}</td>
+                    <td class="px-5 py-4 text-gray-100 font-medium">{{ entry.habit.name }}</td>
+                    <td class="px-5 py-4 text-gray-400">{{ entry.habit.category }}</td>
+                    <td class="px-5 py-4">
+                        {% if entry.completed %}
+                            <span class="inline-flex items-center rounded-full bg-green-500/15 text-green-300 px-3 py-1">Completed</span>
+                        {% else %}
+                            <span class="inline-flex items-center rounded-full bg-gray-500/15 text-gray-300 px-3 py-1">Skipped</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-5 py-4 text-gray-300">{{ entry.notes or '' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

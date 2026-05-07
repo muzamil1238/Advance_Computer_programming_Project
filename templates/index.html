@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — Habit Tracker{% endblock %}
+
+{% block content %}
+<div class="flex flex-col gap-6">
+    <div class="flex items-start justify-between gap-4">
+        <div>
+            <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight">Dashboard</h1>
+            <p class="text-gray-400 mt-1">Welcome back — today is <span class="text-gray-200 font-medium">{{ today }}</span>.</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <button class="js-open-modal inline-flex items-center gap-2 rounded-2xl bg-purple-600 hover:bg-purple-700 px-4 py-3 text-sm font-medium" data-modal="addHabitModal">
+                <i class="fa-solid fa-plus"></i>
+                Add habit
+            </button>
+        </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="rounded-3xl border border-white/10 bg-gray-900 p-5">
+            <div class="text-sm text-gray-400">Current streak</div>
+            <div class="mt-2 text-3xl font-semibold"><span id="kpiStreak">{{ streak }}</span><span class="text-gray-400 text-base font-medium"> days</span></div>
+            <div class="mt-1 text-xs text-gray-500">Perfect days in a row</div>
+        </div>
+        <div class="rounded-3xl border border-white/10 bg-gray-900 p-5">
+            <div class="text-sm text-gray-400">Success rate (30d)</div>
+            <div class="mt-2 text-3xl font-semibold"><span id="kpiSuccessRate">{{ success_rate }}</span><span class="text-gray-400 text-base font-medium">%</span></div>
+            <div class="mt-1 text-xs text-gray-500">Across all habits & days</div>
+        </div>
+        <div class="rounded-3xl border border-white/10 bg-gradient-to-br from-purple-600/20 to-fuchsia-500/10 p-5">
+            <div class="text-sm text-gray-200">Today’s focus</div>
+            <div class="mt-2 text-base text-gray-100">Keep it simple: check in, add a note, move on.</div>
+            <div class="mt-3 inline-flex items-center gap-2 text-xs text-gray-300">
+                <i class="fa-solid fa-bolt"></i> Fast check-ins with instant saving
+            </div>
+        </div>
+    </div>
+
+    <!-- Today's Habits -->
+    <div class="flex items-center justify-between">
+        <h2 class="text-xl font-semibold">Today’s habits</h2>
+        <div class="text-sm text-gray-400">Tap to mark done — notes auto-save.</div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {% for habit in habits %}
+        <div class="rounded-3xl border border-white/10 bg-gray-900 p-5" data-habit-card="{{ habit.id }}">
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <div class="text-lg font-semibold">{{ habit.name }}</div>
+                    <div class="text-sm text-gray-400">{{ habit.category }} • target {{ habit.target_per_week }}/week</div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <label class="inline-flex items-center gap-2 rounded-2xl bg-white/5 hover:bg-white/10 px-3 py-2 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            class="js-checkin h-4 w-4 accent-green-500"
+                            data-habit-id="{{ habit.id }}"
+                            {% if habit.today_completed %}checked{% endif %}
+                        />
+                        <span class="text-sm">Done</span>
+                    </label>
+
+                    <button
+                        type="button"
+                        class="js-edit-habit h-10 w-10 rounded-2xl bg-white/5 hover:bg-white/10"
+                        data-habit-id="{{ habit.id }}"
+                        data-name="{{ habit.name }}"
+                        data-category="{{ habit.category }}"
+                        data-target="{{ habit.target_per_week }}"
+                        aria-label="Edit habit"
+                    >
+                        <i class="fa-regular fa-pen-to-square"></i>
+                    </button>
+
+                    <form action="{{ url_for('delete_habit', habit_id=habit.id) }}" method="POST" onsubmit="return confirm('Delete this habit?')">
+                        <button type="submit" class="h-10 w-10 rounded-2xl bg-white/5 hover:bg-red-500/20 text-red-300" aria-label="Delete habit">
+                            <i class="fa-regular fa-trash-can"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <label class="block text-xs text-gray-400 mb-2">Notes (optional)</label>
+                <textarea
+                    class="js-notes w-full rounded-2xl bg-gray-800/60 border border-white/10 px-4 py-3 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/60"
+                    rows="2"
+                    placeholder="What helped today?"
+                    data-habit-id="{{ habit.id }}"
+                >{{ habit.today_notes }}</textarea>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Heatmap -->
+    <div class="rounded-3xl border border-white/10 bg-gray-900 p-6">
+        <div class="flex items-center justify-between gap-4">
+            <div>
+                <h2 class="text-xl font-semibold">Calendar heatmap</h2>
+                <p class="text-sm text-gray-400 mt-1">Daily completion across all habits (last {{ heatmap|length }} days).</p>
+            </div>
+            <div class="text-xs text-gray-400 flex items-center gap-2">
+                <span>Less</span>
+                <span class="h-3 w-3 rounded bg-gray-800 border border-white/10"></span>
+                <span class="h-3 w-3 rounded bg-purple-900 border border-white/10"></span>
+                <span class="h-3 w-3 rounded bg-purple-700 border border-white/10"></span>
+                <span class="h-3 w-3 rounded bg-green-600 border border-white/10"></span>
+                <span>More</span>
+            </div>
+        </div>
+
+        <div class="mt-5 grid gap-1" style="grid-template-columns: repeat(20, minmax(0, 1fr));">
+            {% for d in heatmap %}
+                {% set ratio = d.ratio %}
+                {% if ratio == 0 %}
+                    {% set bg = 'bg-gray-800' %}
+                {% elif ratio < 0.34 %}
+                    {% set bg = 'bg-purple-900' %}
+                {% elif ratio < 0.67 %}
+                    {% set bg = 'bg-purple-700' %}
+                {% else %}
+                    {% set bg = 'bg-green-600' %}
+                {% endif %}
+                <div class="h-4 w-full rounded border border-white/10 {{ bg }}" title="{{ d.date }} — {{ d.completed }}/{{ d.total }}"></div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Add Habit Modal -->
+<div id="addHabitModal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/70 p-4">
+    <div class="w-full max-w-lg rounded-3xl border border-white/10 bg-gray-900 p-6">
+        <div class="flex items-start justify-between">
+            <div>
+                <div class="text-xl font-semibold">Add a habit</div>
+                <div class="text-sm text-gray-400 mt-1">Keep the target realistic — consistency wins.</div>
+            </div>
+            <button class="js-close-modal h-10 w-10 rounded-2xl bg-white/5 hover:bg-white/10" data-modal="addHabitModal" aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <form class="mt-5 space-y-4" action="{{ url_for('create_habit') }}" method="POST">
+            <div>
+                <label class="block text-xs text-gray-400 mb-2">Habit name</label>
+                <input name="name" required class="w-full rounded-2xl bg-gray-800/60 border border-white/10 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/60" placeholder="e.g., Walk 20 minutes" />
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs text-gray-400 mb-2">Category</label>
+                    <input name="category" class="w-full rounded-2xl bg-gray-800/60 border border-white/10 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/60" placeholder="Health" />
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-2">Target per week</label>
+                    <input name="target_per_week" type="number" min="1" max="14" value="7" class="w-full rounded-2xl bg-gray-800/60 border border-white/10 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/60" />
+                </div>
+            </div>
+            <div class="flex items-center justify-end gap-2 pt-2">
+                <button type="button" class="js-close-modal rounded-2xl bg-white/5 hover:bg-white/10 px-4 py-3 text-sm" data-modal="addHabitModal">Cancel</button>
+                <button type="submit" class="rounded-2xl bg-purple-600 hover:bg-purple-700 px-4 py-3 text-sm font-medium">Create habit</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Habit Modal -->
+<div id="editHabitModal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/70 p-4">
+    <div class="w-full max-w-lg rounded-3xl border border-white/10 bg-gray-900 p-6">
+        <div class="flex items-start justify-between">
+            <div>
+                <div class="text-xl font-semibold">Edit habit</div>
+                <div class="text-sm text-gray-400 mt-1">Update name, category, or weekly target.</div>
+            </div>
+            <button class="js-close-modal h-10 w-10 rounded-2xl bg-white/5 hover:bg-white/10" data-modal="editHabitModal" aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <form id="editHabitForm" class="mt-5 space-y-4" action="#" method="POST">
+            <div>
+                <label class="block text-xs text-gray-400 mb-2">Habit name</label>
+                <input id="editHabitName" name="name" required class="w-full rounded-2xl bg-gray-800/60 border border-white/10 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/60" />
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs text-gray-400 mb-2">Category</label>
+                    <input id="editHabitCategory" name="category" class="w-full rounded-2xl bg-gray-800/60 border border-white/10 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/60" />
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-2">Target per week</label>
+                    <input id="editHabitTarget" name="target_per_week" type="number" min="1" max="14" class="w-full rounded-2xl bg-gray-800/60 border border-white/10 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/60" />
+                </div>
+            </div>
+            <div class="flex items-center justify-end gap-2 pt-2">
+                <button type="button" class="js-close-modal rounded-2xl bg-white/5 hover:bg-white/10 px-4 py-3 text-sm" data-modal="editHabitModal">Cancel</button>
+                <button type="submit" class="rounded-2xl bg-purple-600 hover:bg-purple-700 px-4 py-3 text-sm font-medium">Save changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

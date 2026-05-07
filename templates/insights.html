@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Insights — Habit Tracker{% endblock %}
+
+{% block content %}
+<div class="flex items-start justify-between gap-4 mb-6">
+    <div>
+        <h1 class="text-3xl font-semibold">Insights</h1>
+        <p class="text-gray-400 mt-1">AI-style coaching based on recent performance.</p>
+    </div>
+    <a href="{{ url_for('analytics') }}" class="rounded-2xl bg-white/5 hover:bg-white/10 px-4 py-3 text-sm">View analytics</a>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    {% for t in tips %}
+        {% if t.level == 'warning' %}
+            {% set accent = 'border-yellow-500/30 bg-yellow-500/5' %}
+            {% set icon = 'fa-solid fa-triangle-exclamation text-yellow-300' %}
+        {% elif t.level == 'success' %}
+            {% set accent = 'border-green-500/30 bg-green-500/5' %}
+            {% set icon = 'fa-solid fa-circle-check text-green-300' %}
+        {% else %}
+            {% set accent = 'border-purple-500/30 bg-purple-500/5' %}
+            {% set icon = 'fa-solid fa-wand-magic-sparkles text-purple-300' %}
+        {% endif %}
+
+        <div class="rounded-3xl border border-white/10 {{ accent }} p-6">
+            <div class="flex items-start gap-3">
+                <div class="h-10 w-10 rounded-2xl bg-white/5 flex items-center justify-center">
+                    <i class="{{ icon }}"></i>
+                </div>
+                <div>
+                    <div class="text-lg font-semibold">{{ t.title }}</div>
+                    <div class="text-gray-300 mt-1">{{ t.message }}</div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+
+    <div class="rounded-3xl border border-white/10 bg-gray-900 p-6 lg:col-span-2">
+        <div class="text-lg font-semibold">Next best actions</div>
+        <div class="mt-2 grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="rounded-2xl bg-white/5 p-4">
+                <div class="text-sm text-gray-400">If you missed today</div>
+                <div class="mt-1 text-gray-200">Do a 2-minute version of one habit.</div>
+            </div>
+            <div class="rounded-2xl bg-white/5 p-4">
+                <div class="text-sm text-gray-400">If you’re on track</div>
+                <div class="mt-1 text-gray-200">Raise a weekly target by +1.</div>
+            </div>
+            <div class="rounded-2xl bg-white/5 p-4">
+                <div class="text-sm text-gray-400">For better clarity</div>
+                <div class="mt-1 text-gray-200">Add a short note after check-in.</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Personal Habit Tracker{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-950 text-gray-100">
+    <header class="sticky top-0 z-40 border-b border-white/10 bg-gray-950/80 backdrop-blur">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6">
+            <div class="flex h-16 items-center justify-between">
+                <a href="{{ url_for('index') }}" class="flex items-center gap-3">
+                    <div class="h-9 w-9 rounded-2xl bg-gradient-to-br from-purple-500 to-fuchsia-500"></div>
+                    <div>
+                        <div class="text-sm text-gray-400">Personal Habit Tracker</div>
+                        <div class="text-base font-semibold leading-5">Analytics Lab</div>
+                    </div>
+                </a>
+
+                <nav class="hidden md:flex items-center gap-2 text-sm">
+                    <a class="px-3 py-2 rounded-xl hover:bg-white/5 text-gray-200" href="{{ url_for('index') }}">Dashboard</a>
+                    <a class="px-3 py-2 rounded-xl hover:bg-white/5 text-gray-200" href="{{ url_for('history') }}">History</a>
+                    <a class="px-3 py-2 rounded-xl hover:bg-white/5 text-gray-200" href="{{ url_for('analytics') }}">Analytics</a>
+                    <a class="px-3 py-2 rounded-xl hover:bg-white/5 text-gray-200" href="{{ url_for('insights') }}">Insights</a>
+                </nav>
+
+                <div class="flex items-center gap-2">
+                    <a href="{{ url_for('export_csv') }}" class="hidden sm:inline-flex items-center gap-2 rounded-xl bg-white/5 hover:bg-white/10 px-3 py-2 text-sm">
+                        <i class="fa-solid fa-file-csv"></i>
+                        Export CSV
+                    </a>
+                    <a href="{{ url_for('export_pdf') }}" class="hidden sm:inline-flex items-center gap-2 rounded-xl bg-white/5 hover:bg-white/10 px-3 py-2 text-sm">
+                        <i class="fa-solid fa-file-pdf"></i>
+                        Export PDF
+                    </a>
+
+                    <div class="relative">
+                        <button id="reminderBtn" type="button" class="inline-flex items-center justify-center h-10 w-10 rounded-xl bg-white/5 hover:bg-white/10" aria-label="Reminders">
+                            <i class="fa-regular fa-bell"></i>
+                        </button>
+                        <div id="reminderMenu" class="hidden absolute right-0 mt-2 w-72 rounded-2xl border border-white/10 bg-gray-900 shadow-xl overflow-hidden">
+                            <div class="px-4 py-3 border-b border-white/10 text-sm text-gray-300">Reminder simulation</div>
+                            <button class="reminderItem w-full text-left px-4 py-3 hover:bg-white/5 text-sm" data-msg="Time for your Morning Exercise">⏰ Morning Exercise</button>
+                            <button class="reminderItem w-full text-left px-4 py-3 hover:bg-white/5 text-sm" data-msg="Quick check-in: Drink Water">💧 Drink Water</button>
+                            <button class="reminderItem w-full text-left px-4 py-3 hover:bg-white/5 text-sm" data-msg="2-minute reset: Meditate">🧘 Meditate</button>
+                        </div>
+                    </div>
+
+                    <button id="mobileMenuBtn" type="button" class="md:hidden inline-flex items-center justify-center h-10 w-10 rounded-xl bg-white/5 hover:bg-white/10" aria-label="Menu">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div id="mobileNav" class="hidden md:hidden pb-4">
+                <div class="grid grid-cols-2 gap-2 text-sm">
+                    <a class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10" href="{{ url_for('index') }}">Dashboard</a>
+                    <a class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10" href="{{ url_for('history') }}">History</a>
+                    <a class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10" href="{{ url_for('analytics') }}">Analytics</a>
+                    <a class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10" href="{{ url_for('insights') }}">Insights</a>
+                </div>
+                <div class="grid grid-cols-2 gap-2 mt-3">
+                    <a class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10" href="{{ url_for('export_csv') }}">Export CSV</a>
+                    <a class="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10" href="{{ url_for('export_pdf') }}">Export PDF</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="mx-auto max-w-7xl px-4 sm:px-6 py-8">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="space-y-2 mb-6">
+                    {% for category, message in messages %}
+                        <div class="rounded-2xl border border-white/10 px-4 py-3 text-sm bg-gray-900">
+                            <span class="font-semibold {% if category == 'success' %}text-green-400{% elif category == 'error' %}text-red-400{% else %}text-purple-300{% endif %}">
+                                {{ category|capitalize }}
+                            </span>
+                            <span class="text-gray-200"> — {{ message }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <div id="toast" class="fixed bottom-6 right-6 hidden max-w-sm rounded-2xl border border-white/10 bg-gray-900 px-4 py-3 text-sm shadow-xl"></div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
